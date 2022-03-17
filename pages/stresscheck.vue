@@ -7,7 +7,7 @@
         </v-col>
       </v-row>
     </div>
-    <v-card color="cyan">
+    <v-card color="grey">
       <div class="pt-5">
         <div class="text-right">
           {{ onboarding + 1 }} / {{ questions.length }}
@@ -17,31 +17,7 @@
             v-for="(question, index) in questions"
             :key="`card-${index}`"
           >
-            <v-card
-              color="transparent"
-              height="250"
-            >
-              <v-row
-                class="fill-height"
-                align="center"
-                justify="center"
-              >
-                <v-card-text class="text-center text-h5">
-                  {{ question.question_text }}
-                </v-card-text>
-                <v-radio-group v-model="radioGroup">
-                  <div v-for="answer in answers" :key="answer.id" cols="12">
-                    <div v-if="question.id === answer.questions_id.id">
-                      <v-radio
-                        :label="`${answer.answer_text}`"
-                        :value="`${answer.score}`"
-                        :v-model="picked"
-                      />
-                    </div>
-                  </div>
-                </v-radio-group>
-              </v-row>
-            </v-card>
+            <radio :question="question" :answers="answers" />
           </v-window-item>
         </v-window>
         <v-card-actions class="justify-space-between">
@@ -66,11 +42,13 @@
 <script>
 import { collection, onSnapshot } from '@firebase/firestore'
 import { db } from '../plugins/firebase'
+import radio from '~/components/radio.vue'
 const questionCollectionRef = collection(db, 'Questions')
 const answerCollectionRef = collection(db, 'Answer')
 
 export default {
   name: 'StressCheckerPage',
+  components: { radio },
   middleware: 'authenticated',
   data () {
     return {
@@ -105,9 +83,6 @@ export default {
       this.onboarding = this.onboarding - 1 < 0
         ? this.questions.length - 1
         : this.onboarding - 1
-    },
-    check () {
-      console.log(this.radioGroup)
     }
   }
 }
