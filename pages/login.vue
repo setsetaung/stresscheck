@@ -51,7 +51,7 @@ export default {
               uid: user.uid,
               displayName: user.displayName
             })
-            this.$router.push('/home')
+            this.$router.push('/result')
           })
           .catch(() => {
             this.message = 'ログインできません'

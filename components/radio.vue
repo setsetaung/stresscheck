@@ -34,6 +34,15 @@ export default {
     answers: {
       type: Array, default: null
     }
+  },
+  data () {
+    return {
+      radioGroup: '',
+      questionId: this.question.id
+    }
+  },
+  updated () {
+    this.$emit('selected', { radioGroup: this.radioGroup, questionId: this.question.id })
   }
 }
 </script>
