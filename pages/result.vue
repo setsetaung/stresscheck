@@ -1,0 +1,78 @@
+<template>
+  <div v-if="user">
+    <v-container class="pt-15 text-center">
+      <div class="pt-10">
+        <v-row>
+          <v-col>
+            <h1>Stress Check Result</h1>
+            <h2>{{ user.displayName }}さん</h2>
+          </v-col>
+        </v-row>
+        <v-row v-if="results.length !== 0">
+          <v-col>
+            <v-card
+              class="overflow-y-auto mx-auto"
+              max-height="auto"
+              max-width="400"
+            >
+              <v-card-subtitle v-for="result in results" :key="result.id">
+                {{ result.total_score }} Points <v-spacer />{{ $dateFns.format(result.created_at.toDate(), 'YYYY年MM月DD日hh:mm') }}
+              </v-card-subtitle>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row v-else>
+          <v-col>
+            <h4>You don't have past stress check result.Please check</h4>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-btn to="/stresscheck" color="dark" large nuxt>
+              Start Stress Check
+            </v-btn>
+          </v-col>
+        </v-row>
+      </div>
+    </v-container>
+  </div>
+  <div v-else>
+    <v-btn to="/login" color="dark" large nuxt>
+      Please Login
+    </v-btn>
+  </div>
+</template>
+
+<script>
+import { collection, onSnapshot, query, where, orderBy } from '@firebase/firestore'
+import { db } from '../plugins/firebase'
+
+const resultCollectionRef = collection(db, 'Result')
+const q = query(resultCollectionRef, orderBy('created_at', 'desc'))
+export default {
+  name: 'ResultPage',
+  middleware: 'authenticated',
+  data () {
+    return {
+      results: []
+    }
+  },
+  computed: {
+    user () {
+      return this.$store.state.user
+    }
+  },
+  mounted () {
+    setTimeout(() => {
+      const que = query(q, where('user_id', '==', this.user.uid))
+      onSnapshot(que, (querySnapshot) => {
+        this.results = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+      })
+    }, 1000)
+  },
+  methods: {
+  }
+}
+</script>
+<style scoped>
+</style>

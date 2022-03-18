@@ -1,76 +1,70 @@
 <template>
-  <v-container class="pt-15 text-center">
-    <div class="pt-10">
-      <v-row>
-        <v-col>
-          <h1>Stress Checker</h1>
-        </v-col>
-      </v-row>
-    </div>
-    <v-card color="cyan">
-      <div class="pt-5">
-        <div class="text-right">
-          {{ onboarding + 1 }} / {{ questions.length }}
-        </div>
-        <v-window v-model="onboarding" class="slide-window">
-          <v-window-item
-            v-for="(question, index) in questions"
-            :key="`card-${index}`"
-          >
-            <v-card
-              color="transparent"
-              height="250"
-            >
-              <v-row
-                class="fill-height"
-                align="center"
-                justify="center"
-              >
-                <v-card-text class="text-center text-h5">
-                  {{ question.question_text }}
-                </v-card-text>
-                <v-radio-group v-model="radioGroup">
-                  <div v-for="answer in answers" :key="answer.id" cols="12">
-                    <div v-if="question.id === answer.questions_id.id">
-                      <v-radio
-                        :label="`${answer.answer_text}`"
-                        :value="`${answer.score}`"
-                        :v-model="picked"
-                      />
-                    </div>
-                  </div>
-                </v-radio-group>
-              </v-row>
-            </v-card>
-          </v-window-item>
-        </v-window>
-        <v-card-actions class="justify-space-between">
-          <v-btn
-            btn
-            @click="prev"
-          >
-            <v-icon>mdi-chevron-left</v-icon>
-          </v-btn>
-          <v-btn
-            btn
-            @click="next"
-          >
-            <v-icon>mdi-chevron-right</v-icon>
-          </v-btn>
-        </v-card-actions>
+  <div v-if="user">
+    <v-container class="pt-15 text-center">
+      <div class="pt-10">
+        <v-row>
+          <v-col>
+            <h1>Stress Checker</h1>
+          </v-col>
+        </v-row>
       </div>
-    </v-card>
-  </v-container>
+      <v-card color="grey">
+        <div class="pt-5">
+          <div class="text-right">
+            {{ onboarding + 1 }} / {{ questions.length }}
+          </div>
+          <v-window v-model="onboarding" class="slide-window">
+            <v-window-item
+              v-for="(question, index) in questions"
+              :key="`card-${index}`"
+            >
+              <radio :question="question" :answers="answers" @selected="getselected($event)" />
+            </v-window-item>
+          </v-window>
+          <v-card-actions class="justify-space-between">
+            <v-btn
+              btn
+              @click="prev"
+            >
+              <v-icon>mdi-chevron-left</v-icon>
+            </v-btn>
+            <v-btn
+              v-if="!check"
+              btn
+              @click="next"
+            >
+              <v-icon>mdi-chevron-right</v-icon>
+            </v-btn>
+            <v-btn
+              v-if="check"
+              btn
+              @click="stresscheck"
+            >
+              Check!
+            </v-btn>
+          </v-card-actions>
+        </div>
+      </v-card>
+    </v-container>
+  </div>
+  <div v-else>
+    <login />
+  </div>
 </template>
 
 <script>
-import { collection, onSnapshot } from '@firebase/firestore'
+import { addDoc, collection, onSnapshot } from '@firebase/firestore'
+import { serverTimestamp } from 'firebase/firestore'
 import { db } from '../plugins/firebase'
+import Login from './login.vue'
+import radio from '~/components/radio.vue'
 const questionCollectionRef = collection(db, 'Questions')
 const answerCollectionRef = collection(db, 'Answer')
+const resultCollectionRef = collection(db, 'Result')
 
 export default {
   name: 'StressCheckerPage',
+  components: { radio, Login },
   middleware: 'authenticated',
   data () {
     return {
@@ -79,7 +73,10 @@ export default {
       answers: [],
       answer_text: '',
       score: '',
-      onboarding: 0
+      onboarding: 0,
+      selectedData: [],
+      results: [],
+      total_score: ''
     }
   },
   computed: {
@@ -94,20 +91,54 @@ export default {
     onSnapshot(answerCollectionRef, (querySnapshot) => {
       this.answers = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
     })
+    onSnapshot(resultCollectionRef, (querySnapshot) => {
+      this.results = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }))
+    })
   },
   methods: {
     next () {
       this.onboarding = this.onboarding + 1 === this.questions.length
         ? 0
         : this.onboarding + 1
+      this.onboarding + 1 === this.questions.length
+        ? this.check = true
+        : this.check = false
     },
     prev () {
       this.onboarding = this.onboarding - 1 < 0
         ? this.questions.length - 1
         : this.onboarding - 1
+      this.onboarding + 1 === this.questions.length
+        ? this.check = true
+        : this.check = false
     },
-    check () {
-      console.log(this.radioGroup)
+    getselected (qusData) {
+      this.Questionsdata(qusData)
+    },
+    Questionsdata (qusData) {
+      const question = {
+        questionId: qusData.questionId,
+        value: qusData.radioGroup === '' ? 0 : qusData.radioGroup
+      }
+      const data = this.selectedData.filter(q => q.questionId.includes(question.questionId))
+      if (data.length === 0) {
+        this.selectedData.push(question)
+      } else {
+        const index = this.selectedData.findIndex(q => q.questionId === question.questionId)
+        this.selectedData[index].value = question.value
+      }
+    },
+    stresscheck () {
+      const total = this.selectedData.reduce((pre, cur) => pre + Number(cur.value), 0)
+      addDoc(resultCollectionRef, {
+        user_id: this.user.uid,
+        username: this.user.displayName,
+        total_score: total,
+        created_at: serverTimestamp()
+      }).then(() => {
+        this.$router.push('/Home')
+        this.selectedData = []
+      })
     }
   }
 }
