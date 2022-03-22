@@ -10,6 +10,18 @@
       </div>
       <v-card color="grey">
         <div class="pt-5">
+          <p v-if="onboarding > 45 && onboarding < 49" class=" text-h6">
+            次の人たちはどのくらい気軽に話ができますか?
+          </p>
+          <p v-if="onboarding > 48 && onboarding < 52" class=" text-h6">
+            あなたが困った時、次の人たちはどのくらい頼りになりますか？
+          </p>
+          <p v-if="onboarding > 51 && onboarding < 55" class=" text-h6">
+            あなたが困った時、次の人たちはどのくらい頼りになりますか？
+          </p>
+          <p v-else-if="onboarding > 54 && onboarding < 57" class=" text-h6">
+            満足度について
+          </p>
           <div class="text-right">
             {{ onboarding + 1 }} / {{ questions.length }}
           </div>
@@ -76,7 +88,12 @@ export default {
       onboarding: 0,
       selectedData: [],
       results: [],
-      total_score: ''
+      total_A: '',
+      total_B: '',
+      total_C: '',
+      total_D: '',
+      check: false,
+      qusData: ''
     }
   },
   computed: {
@@ -97,12 +114,28 @@ export default {
   },
   methods: {
     next () {
-      this.onboarding = this.onboarding + 1 === this.questions.length
-        ? 0
-        : this.onboarding + 1
-      this.onboarding + 1 === this.questions.length
-        ? this.check = true
-        : this.check = false
+      if (this.qusData === '' || this.qusData.radioGroup === '') {
+        const index = this.selectedData.findIndex(qus => qus.onboarding === this.onboarding && qus.value !== 0)
+        if (index === -1) {
+          alert('Select Answer')
+        } else {
+          this.onboarding = this.onboarding + 1 === this.questions.length
+            ? 0
+            : this.onboarding + 1
+          this.onboarding + 1 === this.questions.length
+            ? this.check = true
+            : this.check = false
+          this.qusData = ''
+        }
+      } else {
+        this.onboarding = this.onboarding + 1 === this.questions.length
+          ? 0
+          : this.onboarding + 1
+        this.onboarding + 1 === this.questions.length
+          ? this.check = true
+          : this.check = false
+        this.qusData = ''
+      }
     },
     prev () {
       this.onboarding = this.onboarding - 1 < 0
@@ -113,12 +146,14 @@ export default {
         : this.check = false
     },
     getselected (qusData) {
+      this.qusData = qusData
       this.Questionsdata(qusData)
     },
     Questionsdata (qusData) {
       const question = {
         questionId: qusData.questionId,
-        value: qusData.radioGroup === '' ? 0 : qusData.radioGroup
+        value: qusData.radioGroup === '' ? 0 : qusData.radioGroup,
+        onboarding: this.onboarding
       }
       const data = this.selectedData.filter(q => q.questionId.includes(question.questionId))
       if (data.length === 0) {
@@ -129,14 +164,24 @@ export default {
       }
     },
     stresscheck () {
-      const total = this.selectedData.reduce((pre, cur) => pre + Number(cur.value), 0)
+      const AArray = this.selectedData.filter(ans => ans.questionId.startsWith('Q'))
+      this.totalA = AArray.reduce((a, b) => a + Number(b.value), 0)
+      const BArray = this.selectedData.filter(ans => ans.questionId.startsWith('R'))
+      this.totalB = BArray.reduce((a, b) => a + Number(b.value), 0)
+      const CArray = this.selectedData.filter(ans => ans.questionId.startsWith('S'))
+      this.totalC = CArray.reduce((a, b) => a + Number(b.value), 0)
+      const DArray = this.selectedData.filter(ans => ans.questionId.startsWith('T'))
+      this.totalD = DArray.reduce((a, b) => a + Number(b.value), 0)
       addDoc(resultCollectionRef, {
         user_id: this.user.uid,
         username: this.user.displayName,
-        total_score: total,
+        total_A: this.totalA,
+        total_B: this.totalB,
+        total_C: this.totalC,
+        total_D: this.totalD,
         created_at: serverTimestamp()
       }).then(() => {
-        this.$router.push('/Home')
+        this.$router.push('/result')
         this.selectedData = []
       })
     }

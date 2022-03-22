@@ -13,10 +13,11 @@
             <v-card
               class="overflow-y-auto mx-auto"
               max-height="auto"
-              max-width="400"
+              max-width="500"
             >
               <v-card-subtitle v-for="result in results" :key="result.id">
-                {{ result.total_score }} Points <v-spacer />{{ $dateFns.format(result.created_at.toDate(), 'YYYY年MM月DD日hh:mm') }}
+                {{ Number(result.totalB) >= 770 || (Number(result.totalB) >= 630 && Number(result.totalAC) >= 760) ? '高ストレス' : '異常なし' }}
+                {{ $dateFns.format(result.created_at.toDate(), 'YYYY年MM月DD日hh時mm分') }}
               </v-card-subtitle>
             </v-card>
           </v-col>
