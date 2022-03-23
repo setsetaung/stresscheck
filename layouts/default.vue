@@ -60,6 +60,7 @@ export default {
 <style scoped>
 .hero {
   background: url('../assets/stress.jpg');
+  background-position: center;
   background-size: cover;
   height: cover;
 }

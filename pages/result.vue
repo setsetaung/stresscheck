@@ -38,9 +38,7 @@
     </v-container>
   </div>
   <div v-else>
-    <v-btn to="/login" color="dark" large nuxt>
-      Please Login
-    </v-btn>
+    <login />
   </div>
 </template>
 

@@ -10,22 +10,31 @@
       </div>
       <v-card color="grey">
         <div class="pt-5">
-          <p v-if="onboarding > 45 && onboarding < 49" class=" text-h6">
-            次の人たちはどのくらい気軽に話ができますか?
-          </p>
-          <p v-if="onboarding > 48 && onboarding < 52" class=" text-h6">
-            あなたが困った時、次の人たちはどのくらい頼りになりますか？
-          </p>
-          <p v-if="onboarding > 51 && onboarding < 55" class=" text-h6">
-            あなたが困った時、次の人たちはどのくらい頼りになりますか？
-          </p>
-          <p v-else-if="onboarding > 54 && onboarding < 57" class=" text-h6">
-            満足度について
-          </p>
           <div class="text-right">
             {{ onboarding + 1 }} / {{ questions.length }}
           </div>
-          <v-window v-model="onboarding" class="slide-window">
+          <p v-if="onboarding > -1 && onboarding < 17" class=" text-h6">
+            Ａ  あなたの仕事についてうかがいます。最もあてはまるものに○を付けてください。
+          </p>
+          <p v-if="onboarding > 16 && onboarding < 46" class=" text-h6">
+            Ｂ  最近1 か月間のあなたの状態についてうかがいます。最もあてはまるものに○を付けてください。
+          </p>
+          <p v-if="onboarding > 45 && onboarding < 49" class=" text-h6">
+            Ｃ  あなたの周りの方々についてうかがいます。最もあてはまるものに○を付けてください
+            次の人たちはどのくらい気軽に話ができますか?
+          </p>
+          <p v-if="onboarding > 48 && onboarding < 52" class=" text-h6">
+            Ｃ  あなたの周りの方々についてうかがいます。最もあてはまるものに○を付けてください
+            あなたが困った時、次の人たちはどのくらい頼りになりますか？
+          </p>
+          <p v-if="onboarding > 51 && onboarding < 55" class=" text-h6">
+            Ｃ  あなたの周りの方々についてうかがいます。最もあてはまるものに○を付けてください
+            あなたが困った時、次の人たちはどのくらい頼りになりますか？
+          </p>
+          <p v-else-if="onboarding > 54 && onboarding < 57" class=" text-h6">
+            Ｄ  満足度について
+          </p>
+          <v-window v-model="onboarding" class="slide-window" :touch="{ left : next, right: prev }">
             <v-window-item
               v-for="(question, index) in questions"
               :key="`card-${index}`"
@@ -68,7 +77,7 @@
 import { addDoc, collection, onSnapshot } from '@firebase/firestore'
 import { serverTimestamp } from 'firebase/firestore'
 import { db } from '../plugins/firebase'
-import Login from './login.vue'
+import Login from '../components/login.vue'
 import radio from '~/components/radio.vue'
 const questionCollectionRef = collection(db, 'Questions')
 const answerCollectionRef = collection(db, 'Answer')
@@ -172,18 +181,22 @@ export default {
       this.totalC = CArray.reduce((a, b) => a + Number(b.value), 0)
       const DArray = this.selectedData.filter(ans => ans.questionId.startsWith('T'))
       this.totalD = DArray.reduce((a, b) => a + Number(b.value), 0)
-      addDoc(resultCollectionRef, {
-        user_id: this.user.uid,
-        username: this.user.displayName,
-        total_A: this.totalA,
-        total_B: this.totalB,
-        total_C: this.totalC,
-        total_D: this.totalD,
-        created_at: serverTimestamp()
-      }).then(() => {
-        this.$router.push('/result')
-        this.selectedData = []
-      })
+      if (this.selectedData.length === 57) {
+        addDoc(resultCollectionRef, {
+          user_id: this.user.uid,
+          username: this.user.displayName,
+          total_A: this.totalA,
+          total_B: this.totalB,
+          total_C: this.totalC,
+          total_D: this.totalD,
+          created_at: serverTimestamp()
+        }).then(() => {
+          this.$router.push('/result')
+          this.selectedData = []
+        })
+      } else {
+        alert('Answer 57問題')
+      }
     }
   }
 }
