@@ -16,7 +16,7 @@
               max-width="500"
             >
               <v-card-subtitle v-for="result in results" :key="result.id">
-                {{ Number(result.totalB) >= 770 || (Number(result.totalB) >= 630 && Number(result.totalAC) >= 760) ? '高ストレス' : '異常なし' }}
+                {{ Number(result.total_B) >= 770 || (Number(result.total_B) >= 630 && Number(result.total_A + result.total_C) >= 760) ? '高ストレス' : '異常なし' }}
                 {{ $dateFns.format(result.created_at.toDate(), 'YYYY年MM月DD日hh時mm分') }}
               </v-card-subtitle>
             </v-card>
